@@ -5,7 +5,7 @@ class Program
 {
     public static void Main(string[] args)
     {
-        FileParser fileParser = new("input.txt", false);
+        FileParser fileParser = new("input.txt");
         fileParser.ParseLinesToGrammarRules();
         fileParser.PrintGrammarRules();
 
@@ -13,17 +13,5 @@ class Program
         Table table = builder.Build(fileParser.GrammarRules);
 
         LLTableCSVWriter.Write(table, "output.csv");
-
-        //table.Write("out.csv"); 
-        TableSlider slider = new();
-        try
-        {
-            //slider.RunSlider(table);
-            Console.WriteLine("all good");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.ToString());
-        }
     }
 }

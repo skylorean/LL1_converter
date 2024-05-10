@@ -1,21 +1,22 @@
 ﻿using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using System.Text;
 
 namespace LLConverter_1
 {
-    public class FileParser(string fileName, bool directionSymbolsExistsInFile)
+    public class FileParser(string fileName)
     {
         public List<GrammarRule> GrammarRules = [];
 
         private const char START_TOKEN_CH = '<';
         private const char END_TOKEN_CH = '>';
+
         private const int LINE_SEPARATION_LENGTH = 3;
         private const string EMPTY_SYMBOL = "e";
         private const string END_SYMBOL = "@";
 
         private readonly string[] _lines = ReadFile(fileName);
-        private readonly bool _directionSymbolsExistsInFile = directionSymbolsExistsInFile;
 
         private List<string> _tokens = [];
 
@@ -29,22 +30,28 @@ namespace LLConverter_1
             {
                 result.Add(line);
             }
+
             return result.ToArray();
         }
 
         public void ParseLinesToGrammarRules()
         {
+            // Парсинг в _tokens
             ParseTokens();
 
+            // Заполнение правил
             for (int i = 0; i < _lines.Length; i++)
             {
                 GrammarRule grammarRule = new(_tokens[i], [], []);
 
                 int startPos = _tokens[i].Length + 2 + LINE_SEPARATION_LENGTH;
+                // Получение правой части правила
                 string line = _lines[i][startPos..];
 
+                // Символы из правой части правила
                 grammarRule.SymbolsChain = ParseChainSymbols(line);
 
+                // Если это первая строка, то добавляем символ конца чтения
                 if (0 == i)
                 {
                     grammarRule.SymbolsChain.Add(END_SYMBOL);
@@ -53,19 +60,36 @@ namespace LLConverter_1
                 GrammarRules.Add(grammarRule);
             }
 
+            // Избавление от левой рекурсии
             FixLeftRecursive();
 
-            if (!_directionSymbolsExistsInFile)
+            // Ищем направляющие символы
+            FindDirectionSymbolsByRules();
+        }
+
+
+        // Добавление в список токенов каждый нетерминал слева в правиле
+        private void ParseTokens()
+        {
+            foreach (string line in _lines)
             {
-                FindDirectionSymbolsByRules();
+                int tokenEndPos = line.IndexOf(END_TOKEN_CH);
+                if (!line.StartsWith(START_TOKEN_CH) || tokenEndPos <= 1)
+                {
+                    throw new Exception("Wrong token format");
+                }
+
+                string token = line[1..tokenEndPos];
+                _tokens.Add(token);
             }
         }
 
         private void FixLeftRecursive()
         {
-            List<GrammarRule> ruleыWithLeftRecursion = GrammarRules.FindAll(HasLeftRecursion);
+            List<GrammarRule> ruleWithLeftRecursion = GrammarRules.FindAll(HasLeftRecursion);
             List<GrammarRule> rulesPassed = [];
-            foreach (GrammarRule grammarRule in ruleыWithLeftRecursion)
+
+            foreach (GrammarRule grammarRule in ruleWithLeftRecursion)
             {
                 RemoveLeftRecursion(grammarRule, rulesPassed);
                 rulesPassed.Add(grammarRule);
@@ -147,13 +171,16 @@ namespace LLConverter_1
         private void FindDirectionSymbolsByRules()
         {
             List<int> listOfTokenIndexesWithEmptyChars = [];
+
             for (int index = 0; index < GrammarRules.Count; index++)
             {
                 var grammarRule = GrammarRules[index];
+                // Если есть пустой символ, то...
                 if (grammarRule.SymbolsChain.Contains(EMPTY_SYMBOL))
                 {
                     listOfTokenIndexesWithEmptyChars.Add(index);
                 }
+                // Если нет направляющих символов
                 else if (0 == grammarRule.DirectionSymbols.Count)
                 {
                     grammarRule.DirectionSymbols.AddRange(FindDirectionSymbolsForToken(index));
@@ -168,14 +195,17 @@ namespace LLConverter_1
 
         private List<string> FindDirectionSymbolsForToken(int tokenIdx)
         {
+            // Получение нужного правила и правой его части
             var grammarRule = GrammarRules[tokenIdx];
             var firstChainCharacter = grammarRule.SymbolsChain[0];
 
+            // Если это нетерминал, то..
             if (TokenIsNonTerminal(firstChainCharacter))
             {
                 List<string> result = [];
                 for (int i = 0; i < GrammarRules.Count; i++)
                 {
+                    // Ищем правило, в котором слева нужный нам нетерминал и рекурсивно продолжаем, пока не дойдём до терминалов
                     if (GrammarRules[i].Token == firstChainCharacter && i != tokenIdx)
                     {
                         result.AddRange(FindDirectionSymbolsForToken(i));
@@ -185,6 +215,7 @@ namespace LLConverter_1
                 return result.Distinct().ToList();
             }
 
+            // Возвращаем терминал
             return grammarRule.SymbolsChain.Contains(EMPTY_SYMBOL) ? [] : [firstChainCharacter];
         }
 
@@ -192,6 +223,7 @@ namespace LLConverter_1
         {
             var token = GrammarRules[tokenIdx].Token;
             List<string> directionsChars = [];
+
             foreach (GrammarRule grammarRule in GrammarRules)
             {
                 int idx = grammarRule.SymbolsChain.IndexOf(token);
@@ -219,7 +251,7 @@ namespace LLConverter_1
             }
         }
 
-        List<string> GetDirectionSymbolsByToken(string token)
+        private List<string> GetDirectionSymbolsByToken(string token)
         {
             List<string> result = [];
             foreach (GrammarRule grammarRule in GrammarRules)
@@ -232,7 +264,7 @@ namespace LLConverter_1
             return result;
         }
 
-        bool TokenIsNonTerminal(string token)
+        private bool TokenIsNonTerminal(string token)
         {
             foreach (GrammarRule grammarRule in GrammarRules)
             {
@@ -275,33 +307,7 @@ namespace LLConverter_1
             return result;
         }
 
-        private List<string> ParseDirectionSymbols(string str)
-        {
-            if (!str.Contains(','))
-            {
-                return [str.Trim()];
-            }
-            return new(str.Trim().Split(','));
-        }
-
-        /*
-         * Находит на каждой строке левый нетерминал и добавляет в _tokens 
-         */
-        private void ParseTokens()
-        {
-            foreach (string line in _lines)
-            {
-                int tokenEndPos = line.IndexOf(END_TOKEN_CH);
-                if (!line.StartsWith(START_TOKEN_CH) || tokenEndPos <= 1)
-                {
-                    throw new Exception("Wrong token format");
-                }
-                string token = line[1..tokenEndPos];
-                _tokens.Add(token);
-            }
-        }
-
-        // Вспомогательный вывод
+        // Just to debug
         public void PrintGrammarRules()
         {
             Console.WriteLine("<------------------->");

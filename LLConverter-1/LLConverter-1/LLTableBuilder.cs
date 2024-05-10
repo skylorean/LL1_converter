@@ -11,17 +11,10 @@ namespace LLConverter_1
         private const string EMPTY_CHAR = "e";
         private const string END_CHAR = "@";
 
-        //public List<GrammarRule> GrammarRules { get; private set; } = grammarRules;
-
         public Table Build(List<GrammarRule> grammarRules)
         {
-            //var ptrsLeftPart = new List<int>();
             var leftRows = ParseLeftPart(grammarRules);
             var rightRows = ParseRightPart(grammarRules);
-            //for (int i = 0; i < leftRows.Count; i++)
-            //{
-            //    leftRows[i].Pointer = ptrsLeftPart[i];
-            //}
 
             return new Table((leftRows.Concat(rightRows)).ToList());
         }
@@ -50,16 +43,13 @@ namespace LLConverter_1
                 {
                     error = true;
                 }
+
                 var row = new Row(grammarRules[i].Token,
                     grammarRules[i].DirectionSymbols, false, error, ptr,
                     false, false);
 
                 result.Add(row);
                 ptr += grammarRules[i].SymbolsChain.Count;
-                //if (i == 0)
-                //{
-                //    ptr++;
-                //}
             }
             return result;
         }
@@ -102,7 +92,6 @@ namespace LLConverter_1
         private List<Row> ParseRightPart(List<GrammarRule> grammarRules)
         {
             var dict = DoMapOfNonTerminal(grammarRules);
-            //var endsIdx = ParseRulesForEndChars(grammarRules);
             var rows = new List<Row>();
             for (int i = 0; i < grammarRules.Count; i++)
             {
@@ -113,14 +102,12 @@ namespace LLConverter_1
                     {
                         var ptr = grammarRules.FindIndex(r => r.Token == symbol);
                         bool moveToNextLine = true;
+
                         if (j == grammarRules[i].SymbolsChain.Count - 1 && i != 0)
                         {
                             moveToNextLine = false;
                         }
-                        //var moveToNextLine = j == GrammarRules.
-                        //var moveToNextLine = j == GrammarRules[i].SymbolsChain.Count - 1
-                        //    ? false : true;
-                        //var end = i == rules.Count - 1
+
                         var row = new Row(symbol,
                             dict[symbol], false, true, ptr, moveToNextLine, false);
                         rows.Add(row);
@@ -155,22 +142,8 @@ namespace LLConverter_1
                                 false, false);
                             rows.Add(row);
                         }
-
                     }
-                    //if (endsIdx.Contains(i) && j == GrammarRules[i].SymbolsChain.Count - 1)
-                    //{
-                    //    var row = new Row(END_CHAR,
-                    //        [END_CHAR], true, true, null, false, true);
-                    //    rows.Add(row);
-                    //}
                 }
-                //int ptrLeftPart = rows.Count - GrammarRules[i]
-                //    .SymbolsChain.Count + GrammarRules.Count;
-                //if (endsIdx.Contains(i))
-                //{
-                //    ptrLeftPart--;
-                //}    
-                //leftPartsPtrs.Add(ptrLeftPart);
             }
             return rows;
         }

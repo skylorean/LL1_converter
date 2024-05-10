@@ -1,11 +1,4 @@
-﻿using CsvHelper;
-using CsvHelper.Configuration;
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Text;
 
 namespace LLConverter_1
 {
@@ -33,6 +26,7 @@ namespace LLConverter_1
                 Encoding.Default))
             {
                 writer.WriteLine(string.Join(";", GetHeadersOfTable()));
+
                 for (int i = 0; i < table.Rows.Count; i++)
                 {
                     string token = table.Rows[i].Token == ";" ? "semicolon" 
