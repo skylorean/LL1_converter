@@ -165,9 +165,7 @@ namespace LLConverter_1
             return rule.SymbolsChain.Count > 0 && rule.SymbolsChain[0] == rule.Token;
         }
 
-        /**
-         * Поиск направляющих символов
-         */
+        // Поиск направляющих символов
         private void FindDirectionSymbolsByRules()
         {
             List<int> listOfTokenIndexesWithEmptyChars = [];
