@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 namespace LLConverter_1
 {
-    
+
     public class TableSlider
     {
-        private Lexer _lexer = null;
+        private readonly Lexer _lexer = new("lexer2.txt");
         public void RunSlider(Table table)
         {
             if (table == null) return;
@@ -31,7 +31,7 @@ namespace LLConverter_1
                     {
                         currRowNumber = currRow.Pointer.Value;
                     }
-                    else 
+                    else
                     {
                         if (!stack.TryPop(out currRowNumber))
                         {
@@ -54,5 +54,4 @@ namespace LLConverter_1
             }
         }
     }
-    
 }

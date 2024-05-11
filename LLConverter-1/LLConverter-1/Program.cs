@@ -1,11 +1,10 @@
 ﻿using LLConverter_1;
-using System.Text;
 
 class Program
 {
     public static void Main(string[] args)
     {
-        FileParser fileParser = new("input.txt");
+        FileParser fileParser = new("input2.txt", true);
         fileParser.ParseLinesToGrammarRules();
         fileParser.PrintGrammarRules();
 
