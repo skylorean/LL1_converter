@@ -4,7 +4,18 @@ class Program
 {
     public static void Main(string[] args)
     {
-        FileParser fileParser = new("input2.txt", true);
+
+        Console.WriteLine(args.Length);
+        if (args.Length == 0)
+        {
+            throw new Exception("File path is not included");
+        }
+
+        string fileName = args[0];
+        bool hasDirectionSymbols = args.Length == 1;
+        Console.WriteLine(hasDirectionSymbols);
+
+        FileParser fileParser = new(fileName, hasDirectionSymbols);
         fileParser.ParseLinesToGrammarRules();
         fileParser.PrintGrammarRules();
 
