@@ -47,6 +47,7 @@ namespace LLConverter_1
                 int startPos = _tokens[i].Length + 2 + LINE_SEPARATION_LENGTH;
                 string line = _lines[i][startPos..];
 
+                // Копируем направляющие символы, если они предоставлены
                 if (_hasDirectionSymbols)
                 {
                     string[] arr = line.Split('/');
@@ -73,7 +74,7 @@ namespace LLConverter_1
             // Избавление от левой рекурсии
             FixLeftRecursive();
 
-            // Ищем направляющие символы
+            // Ищем направляющие символы, если их нет в исходной грамматике
             if (!_hasDirectionSymbols)
             {
                 FindDirectionSymbolsByRules();
@@ -108,6 +109,7 @@ namespace LLConverter_1
 
         private void FixLeftRecursive()
         {
+            // Находим все правила с левой рекурсией
             List<GrammarRule> ruleWithLeftRecursion = GrammarRules.FindAll(HasLeftRecursion);
             List<GrammarRule> rulesPassed = [];
 
@@ -245,11 +247,13 @@ namespace LLConverter_1
                         result.AddRange(FindDirectionSymbolsForToken(i));
                     }
                 }
+
                 // Удаление дубликатов
                 return result.Distinct().ToList();
             }
 
-
+            // Токен - терминал
+            // Если есть эпсилон правило, то делаем follow от токена, иначе же первый символ цепочки
             return grammarRule.SymbolsChain.Contains(EMPTY_SYMBOL) ? Follow(grammarRule.Token).Distinct().ToList() : [firstChainCharacter];
         }
 

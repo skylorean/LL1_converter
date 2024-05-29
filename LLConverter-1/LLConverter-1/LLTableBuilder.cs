@@ -107,11 +107,17 @@
                         // Указатель - номер правила из левой части
                         int ptr = grammarRules.FindIndex(r => r.Token == symbol);
 
-                        bool isLastSymbol = j == grammarRules[i].SymbolsChain.Count - 1;
-                        bool isFirstGrammarRule = i == 0;
+                        //bool isLastSymbol = j == (grammarRules[i].SymbolsChain.Count - 1);
+                        //bool isFirstGrammarRule = i == 0;
 
-                        // Если символ последний и правило не первое, то сдвиг на другую строку
-                        bool moveToNextLine = isLastSymbol && !isFirstGrammarRule;
+                        //// Если символ последний и правило не первое, то сдвиг на другую строку
+                        //bool moveToNextLine = isLastSymbol && !isFirstGrammarRule;
+
+                        bool moveToNextLine = true;
+                        if (j == grammarRules[i].SymbolsChain.Count - 1 && i != 0)
+                        {
+                            moveToNextLine = false;
+                        }
 
                         // У него из direction все символы из мапы
                         // Сдвиг никогда
