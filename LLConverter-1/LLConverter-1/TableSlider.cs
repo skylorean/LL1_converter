@@ -1,15 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace LLConverter_1
+﻿namespace LLConverter_1
 {
-
     public class TableSlider
     {
-        private readonly Lexer _lexer = new("lexer2.txt");
+        private readonly Lexer _lexer;
+
+        public TableSlider(string lexerFileName)
+        {
+            _lexer = new Lexer(lexerFileName);
+        }
+
         public void RunSlider(Table table)
         {
             if (table == null) return;
@@ -19,14 +18,17 @@ namespace LLConverter_1
             string currToken = _lexer.GetNextToken();
             Row currRow = table.Rows[currRowNumber];
 
+            // Выход из цикла только, если строка - последняя И на вход нет лексем И стэк пуст
             while (true)
             {
                 if (currRow.End && stack.Count == 0 && _lexer.IsEnd()) break;
 
+                // Если в направляющих символах строки таблички есть наш токен
                 if (currRow.DirectionSymbols.Contains(currToken))
                 {
-                    if (currRow.Shift) currToken = _lexer.GetNextToken();
+                    // Стэк
                     if (currRow.MoveToNextLine) stack.Push(currRowNumber + 1);
+                    // Указатель на другую строку
                     if (currRow.Pointer.HasValue)
                     {
                         currRowNumber = currRow.Pointer.Value;
@@ -37,7 +39,10 @@ namespace LLConverter_1
                         {
                             throw new Exception($"currRowNumber: {currRowNumber}, currToken: {currToken}, stack is empty");
                         }
+
                     }
+
+                    if (currRow.Shift) currToken = _lexer.GetNextToken();
                 }
                 else if (!currRow.Error)
                 {
@@ -54,4 +59,5 @@ namespace LLConverter_1
             }
         }
     }
+
 }

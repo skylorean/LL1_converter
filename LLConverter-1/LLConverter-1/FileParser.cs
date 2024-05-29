@@ -47,6 +47,7 @@ namespace LLConverter_1
                 int startPos = _tokens[i].Length + 2 + LINE_SEPARATION_LENGTH;
                 string line = _lines[i][startPos..];
 
+                // Копируем направляющие символы, если они предоставлены
                 if (_hasDirectionSymbols)
                 {
                     string[] arr = line.Split('/');
@@ -73,10 +74,10 @@ namespace LLConverter_1
             // Избавление от левой рекурсии
             FixLeftRecursive();
 
-            // Ищем направляющие символы
+            // Ищем направляющие символы, если их нет в исходной грамматике
             if (!_hasDirectionSymbols)
             {
-                
+                FindDirectionSymbolsByRules();
             }
         }
 
@@ -108,6 +109,7 @@ namespace LLConverter_1
 
         private void FixLeftRecursive()
         {
+            // Находим все правила с левой рекурсией
             List<GrammarRule> ruleWithLeftRecursion = GrammarRules.FindAll(HasLeftRecursion);
             List<GrammarRule> rulesPassed = [];
 
@@ -215,6 +217,103 @@ namespace LLConverter_1
             }
 
             return result;
+        }
+
+        private void FindDirectionSymbolsByRules()
+        {
+            List<int> listOfTokenIndexesWithEmptyChars = [];
+            for (int index = 0; index < GrammarRules.Count; index++)
+            {
+                var grammarRule = GrammarRules[index];
+                if (0 == grammarRule.DirectionSymbols.Count)
+                {
+                    grammarRule.DirectionSymbols.AddRange(FindDirectionSymbolsForToken(index));
+                }
+            }
+        }
+
+        private List<string> FindDirectionSymbolsForToken(int tokenIdx)
+        {
+            var grammarRule = GrammarRules[tokenIdx];
+            var firstChainCharacter = grammarRule.SymbolsChain[0];
+
+            if (TokenIsNonTerminal(firstChainCharacter))
+            {
+                List<string> result = [];
+                for (int i = 0; i < GrammarRules.Count; i++)
+                {
+                    if (GrammarRules[i].Token == firstChainCharacter && i != tokenIdx)
+                    {
+                        result.AddRange(FindDirectionSymbolsForToken(i));
+                    }
+                }
+
+                // Удаление дубликатов
+                return result.Distinct().ToList();
+            }
+
+            // Токен - терминал
+            // Если есть эпсилон правило, то делаем follow от токена, иначе же первый символ цепочки
+            return grammarRule.SymbolsChain.Contains(EMPTY_SYMBOL) ? Follow(grammarRule.Token).Distinct().ToList() : [firstChainCharacter];
+        }
+
+        private bool TokenIsNonTerminal(string token)
+        {
+            foreach (GrammarRule grammarRule in GrammarRules)
+            {
+                if (grammarRule.Token == token)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private List<string> Follow(string token)
+        {
+            List<string> dirSymbols = [];
+
+            List<GrammarRule> grammarRules = GrammarRules.FindAll(x => x.SymbolsChain.Contains(token) && x.Token != token);
+
+            for (int i = 0; i < grammarRules.Count; i++)
+            {
+                var grammarRule = grammarRules[i];
+
+                int idx = grammarRule.SymbolsChain.IndexOf(token);
+
+                if (idx == grammarRule.SymbolsChain.Count - 1 || ((idx == grammarRule.SymbolsChain.Count - 2) && (GrammarRules.IndexOf(grammarRule) == 0)))
+                {
+                    if (token != grammarRule.Token)
+                    {
+                        dirSymbols.AddRange(Follow(grammarRule.Token));
+                        if ((idx == grammarRule.SymbolsChain.Count - 2) && (GrammarRules.IndexOf(grammarRule) == 0))
+                            dirSymbols.Add("@");
+
+                        continue;
+                    }
+                }
+
+                if (idx != grammarRule.SymbolsChain.Count - 1)
+                {
+                    string symbol = grammarRule.SymbolsChain[idx + 1];
+                    if (TokenIsNonTerminal(symbol))
+                    {
+                        List<GrammarRule> gramRules = GrammarRules.FindAll(x => x.Token == symbol && x.Token != grammarRule.Token);
+                        for (int j = 0; j < gramRules.Count; j++)
+                            dirSymbols.AddRange(FindDirectionSymbolsForToken(GrammarRules.IndexOf(gramRules[j])));
+                    }
+                    else if (symbol == EMPTY_SYMBOL)
+                    {
+                        dirSymbols.AddRange(Follow(grammarRule.Token));
+                    }
+                    else
+                    {
+                        dirSymbols.Add(symbol);
+                    }
+                }
+            }
+
+            return dirSymbols;
         }
 
         // Just to debug

@@ -1,0 +1,8 @@
+<S> - type <I> = <T> <B> / type
+<T> - int / int
+<T> - record <I>:<T> <B> end / record
+<B> - e / @,end
+<B> - <I>:<T><B> / a,b,c
+<I> - a / a
+<I> - b / b
+<I> - c / c
