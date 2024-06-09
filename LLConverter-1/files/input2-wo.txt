@@ -1,0 +1,8 @@
+<S> - type <I> = <T> <B>
+<T> - int
+<T> - record <I>:<T> <B> end
+<B> - e
+<B> - <I>:<T><B>
+<I> - a
+<I> - b
+<I> - c
